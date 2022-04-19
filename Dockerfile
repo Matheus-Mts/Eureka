@@ -1,5 +1,20 @@
-FROM openjdk:16-jdk-slim
-ARG JAR_FILE=target/*.jar
-COPY ${JAR_FILE} app.jar
-RUN
-ENTRYPOINT ["java", "-jar","/app.jar"]
+# Docker Build Stage
+FROM maven:3-jdk-8-alpine AS build
+
+
+# Build Stage
+WORKDIR /opt/app
+
+COPY ./ /opt/app
+RUN mvn clean install -DskipTests
+
+
+# Docker Build Stage
+FROM openjdk:8-jdk-alpine
+
+COPY --from=build /opt/app/target/*.jar app.jar
+
+ENV PORT 8761
+EXPOSE $PORT
+
+ENTRYPOINT ["java","-jar","-Xmx1024M","-Dserver.port=${PORT}","app.jar"]
